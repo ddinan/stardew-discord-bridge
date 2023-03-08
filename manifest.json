@@ -1,0 +1,10 @@
+﻿{
+    "Name": "DiscordBridge",
+    "Author": "Venk",
+    "Version": "1.0.0",
+    "Description": "Relays Discord messages to and from the server.",
+    "UniqueID": "venk.discordbridge",
+    "EntryDll": "DiscordBridge.dll",
+    "MinimumApiVersion": "3.0.0",
+    "UpdateKeys": []
+}
