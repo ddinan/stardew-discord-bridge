@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
 
@@ -34,6 +35,10 @@ namespace DiscordBridge
 
             ModMonitor = Monitor;
 
+            // Custom event handlers
+            Helper.Events.Multiplayer.PeerConnected += HandlePeerConnected;
+            Helper.Events.Multiplayer.PeerDisconnected += HandlePeerDisconnected;
+
             DiscordBot.Start(); // Start the Discord bot
         }
 
@@ -47,23 +52,50 @@ namespace DiscordBridge
         /// <param name="message">The message content.</param>
         private static async void ReceiveChatMessageHandler(long sourceFarmer, int chatKind, LocalizedContentManager.LanguageCode language, string message)
         {
-            string playerName = "";
-
-            // Find the player's name from the ID
-            if (sourceFarmer == Game1.player.UniqueMultiplayerID)
-            {
-                playerName = ChatBox.formattedUserName(Game1.player);
-            }
-
-            else if (Game1.otherFarmers.ContainsKey(sourceFarmer))
-            {
-                playerName = ChatBox.formattedUserName(Game1.otherFarmers[sourceFarmer]);
-            }
+            string playerName = GetPlayerNameByID(sourceFarmer);
 
             // Only show messages sent by players
             if (playerName != "")
             {
                 await DiscordBot.SendChannelMessageAsync("**" + playerName + "**: " + message); // Send the message on Discord
+            }
+        }
+
+        public static string GetPlayerNameByID(long playerID)
+        {
+            string playerName = "";
+
+            // Find the player's name from the ID
+            if (playerID == Game1.player.UniqueMultiplayerID)
+            {
+                playerName = ChatBox.formattedUserName(Game1.player);
+            }
+
+            else if (Game1.otherFarmers.ContainsKey(playerID))
+            {
+                playerName = ChatBox.formattedUserName(Game1.otherFarmers[playerID]);
+            }
+
+            return playerName;
+        }
+
+        private async void HandlePeerConnected(object sender, PeerConnectedEventArgs e)
+        {
+            string playerName = GetPlayerNameByID(e.Peer.PlayerID);
+
+            if (playerName != "")
+            {
+                await DiscordBot.SendChannelMessageAsync(":inbox_tray: **" + playerName + "** connected."); // Send the message on Discord
+            }
+        }
+
+        private async void HandlePeerDisconnected(object sender, PeerDisconnectedEventArgs e)
+        {
+            string playerName = GetPlayerNameByID(e.Peer.PlayerID);
+
+            if (playerName != "")
+            {
+                await DiscordBot.SendChannelMessageAsync(":outbox_tray: **" + playerName + "** disconnected."); // Send the message on Discord
             }
         }
     }
